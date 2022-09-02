@@ -45,7 +45,7 @@ int authn(char *usr,char* pwd)
 int rdr;
 char buff[50];
 void sig_hand()
-{   
+{
     int pid=0;
     int j=0;
     while(buff[j]!=' ')
@@ -78,20 +78,41 @@ void sig_hand()
 }
 int main()
 {
-    mkfifo("fifo",0666);
-    // printf("%d\n",getpid());
-    rdr = open("fifo",O_RDONLY);
-    printf("Reading log entries...\n");
-    while(1)
+    int ret = fork();
+    if(ret==0)
     {
-        read(rdr,buff,30);
-        if(strlen(buff))
-        {
-            //printf("Buffer: %s\n",buff);
-            sig_hand();
-            for(int i=0;i<50;i++) //clean buffer
-                buff[i]='\0';
-        } 
-    }
+        if( setsid()<0 ) { //failed to become session leader
+        fprintf(stderr,"error: failed setsid\n");
+        exit(EXIT_FAILURE);
+        }
 
+        signal(SIGCHLD,SIG_IGN);
+        signal(SIGHUP,SIG_IGN);
+
+        int child;
+        if ( (child=fork())<0) { //failed fork
+            fprintf(stderr,"error: failed fork\n");
+            exit(EXIT_FAILURE);
+        }
+        if( child>0 ) { //parent
+            exit(EXIT_SUCCESS);
+        }
+    
+        mkfifo("fifo",0666);
+        // printf("%d\n",getpid());
+        rdr = open("fifo",O_RDONLY);
+        printf("Reading log entries...\n");
+        while(1)
+        {
+            read(rdr,buff,30);
+            if(strlen(buff))
+            {
+                //printf("Buffer: %s\n",buff);
+                sig_hand();
+                for(int i=0;i<50;i++) //clean buffer
+                    buff[i]='\0';
+            }
+        }
+    }
+    return 0;
 }
