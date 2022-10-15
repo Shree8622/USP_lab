@@ -17,8 +17,7 @@ int main()
     sem_id = semget(key,1,IPC_CREAT|0666);
     // printf("%d\n",sem_id);
 
-    // semctl(sem_id,0,SETVAL,1);
-    // semctl(sem_id,0,GETVAL);
+    semctl(sem_id,0,SETVAL,1);
 
     int v = fork();
     if(v==0)
@@ -52,7 +51,7 @@ int main()
         {
             semctl(sem_id,0,SETVAL,0);
             printf("Parent accessed semaphore!\n");
-            
+
             char *num = (char*)malloc(sizeof(char)*10);
             num = "0123456789";
 
